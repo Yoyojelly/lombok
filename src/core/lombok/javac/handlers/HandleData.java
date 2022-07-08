@@ -58,12 +58,13 @@ public class HandleData extends JavacAnnotationHandler<Data> {
 		}
 		
 		String staticConstructorName = annotation.getInstance().staticConstructor();
-		
+		boolean map = annotation.getInstance().map();
+
 		// TODO move this to the end OR move it to the top in eclipse.
 		handleConstructor.generateRequiredArgsConstructor(typeNode, AccessLevel.PUBLIC, staticConstructorName, SkipIfConstructorExists.YES, annotationNode);
 		handleConstructor.generateExtraNoArgsConstructor(typeNode, annotationNode);
 		handleGetter.generateGetterForType(typeNode, annotationNode, AccessLevel.PUBLIC, true, List.<JCAnnotation>nil());
-		handleSetter.generateSetterForType(typeNode, annotationNode, AccessLevel.PUBLIC, true, List.<JCAnnotation>nil(), List.<JCAnnotation>nil());
+		handleSetter.generateSetterForType(typeNode, annotationNode, AccessLevel.PUBLIC,map, true, List.<JCAnnotation>nil(), List.<JCAnnotation>nil());
 		handleEqualsAndHashCode.generateEqualsAndHashCodeForType(typeNode, annotationNode);
 		handleToString.generateToStringForType(typeNode, annotationNode);
 	}

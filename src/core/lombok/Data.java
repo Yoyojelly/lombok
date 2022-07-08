@@ -58,4 +58,6 @@ public @interface Data {
 	 * @return Name of static 'constructor' method to generate (blank = generate a normal constructor).
 	 */
 	String staticConstructor() default "";
+
+	boolean map() default false;
 }

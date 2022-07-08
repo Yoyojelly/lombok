@@ -92,4 +92,6 @@ public @interface Setter {
 	@Retention(RetentionPolicy.SOURCE)
 	@Target({})
 	@interface AnyAnnotation {}
+
+	boolean map() default false;
 }
