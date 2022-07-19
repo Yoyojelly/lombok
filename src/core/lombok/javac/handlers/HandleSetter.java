@@ -285,7 +285,6 @@ public class HandleSetter extends JavacAnnotationHandler<Setter> {
             statements.append(treeMaker.Exec(setBool));
         }
 
-        System.out.println("sourceName:" + field.getKind().getDeclaringClass().getName());
         if (map) {
             JCTree.JCExpression mapPutMethod = JavacHandlerUtil.chainDotsString(source, "put");
             final JCTree.JCLiteral literal = treeMaker.Literal(field.getName());

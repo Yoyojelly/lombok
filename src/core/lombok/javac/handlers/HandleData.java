@@ -23,9 +23,11 @@ package lombok.javac.handlers;
 
 import static lombok.core.handlers.HandlerUtil.*;
 import static lombok.javac.handlers.JavacHandlerUtil.*;
+
 import lombok.AccessLevel;
 import lombok.ConfigurationKeys;
 import lombok.Data;
+import lombok.SneakyThrows;
 import lombok.core.AnnotationValues;
 import lombok.javac.JavacAnnotationHandler;
 import lombok.javac.JavacNode;
@@ -48,7 +50,7 @@ public class HandleData extends JavacAnnotationHandler<Data> {
 	
 	@Override public void handle(AnnotationValues<Data> annotation, JCAnnotation ast, JavacNode annotationNode) {
 		handleFlagUsage(annotationNode, ConfigurationKeys.DATA_FLAG_USAGE, "@Data");
-		
+
 		deleteAnnotationIfNeccessary(annotationNode, Data.class);
 		JavacNode typeNode = annotationNode.up();
 		
@@ -63,9 +65,11 @@ public class HandleData extends JavacAnnotationHandler<Data> {
 		// TODO move this to the end OR move it to the top in eclipse.
 		handleConstructor.generateRequiredArgsConstructor(typeNode, AccessLevel.PUBLIC, staticConstructorName, SkipIfConstructorExists.YES, annotationNode);
 		handleConstructor.generateExtraNoArgsConstructor(typeNode, annotationNode);
-		handleGetter.generateGetterForType(typeNode, annotationNode, AccessLevel.PUBLIC, true, List.<JCAnnotation>nil());
+		handleGetter.generateGetterForType(typeNode, annotationNode, AccessLevel.PUBLIC, map,true, List.<JCAnnotation>nil());
 		handleSetter.generateSetterForType(typeNode, annotationNode, AccessLevel.PUBLIC,map, true, List.<JCAnnotation>nil(), List.<JCAnnotation>nil());
 		handleEqualsAndHashCode.generateEqualsAndHashCodeForType(typeNode, annotationNode);
 		handleToString.generateToStringForType(typeNode, annotationNode);
 	}
+
+
 }

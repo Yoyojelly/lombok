@@ -74,6 +74,9 @@ public class HandleGetter extends JavacAnnotationHandler<Getter> {
 	private static final String GETTER_NODE_NOT_SUPPORTED_ERR = "@Getter is only supported on a class, an enum, or a field.";
 	
 	public void generateGetterForType(JavacNode typeNode, JavacNode errorNode, AccessLevel level, boolean checkForTypeLevelGetter, List<JCAnnotation> onMethod) {
+		generateGetterForType(typeNode, errorNode, level, false, checkForTypeLevelGetter, onMethod);
+	}
+	public void generateGetterForType(JavacNode typeNode, JavacNode errorNode, AccessLevel level,boolean map, boolean checkForTypeLevelGetter, List<JCAnnotation> onMethod) {
 		if (checkForTypeLevelGetter) {
 			if (hasAnnotation(Getter.class, typeNode)) {
 				//The annotation will make it happen, so we can skip it.
@@ -87,7 +90,7 @@ public class HandleGetter extends JavacAnnotationHandler<Getter> {
 		}
 		
 		for (JavacNode field : typeNode.down()) {
-			if (fieldQualifiesForGetterGeneration(field)) generateGetterForField(field, errorNode.get(), level, false, onMethod);
+			if (fieldQualifiesForGetterGeneration(field)) generateGetterForField(field, errorNode.get(), level, false,map, onMethod);
 		}
 	}
 	
@@ -117,11 +120,14 @@ public class HandleGetter extends JavacAnnotationHandler<Getter> {
 	 * @param pos The node responsible for generating the getter (the {@code @Data} or {@code @Getter} annotation).
 	 */
 	public void generateGetterForField(JavacNode fieldNode, DiagnosticPosition pos, AccessLevel level, boolean lazy, List<JCAnnotation> onMethod) {
+		generateGetterForField(fieldNode, pos, level, lazy,false, onMethod);
+	}
+	public void generateGetterForField(JavacNode fieldNode, DiagnosticPosition pos, AccessLevel level, boolean lazy,boolean map, List<JCAnnotation> onMethod) {
 		if (hasAnnotation(Getter.class, fieldNode)) {
 			//The annotation will make it happen, so we can skip it.
 			return;
 		}
-		createGetterForField(level, fieldNode, fieldNode, false, lazy, onMethod);
+		createGetterForField(level, fieldNode, fieldNode, false, lazy,map, onMethod);
 	}
 	
 	@Override public void handle(AnnotationValues<Getter> annotation, JCAnnotation ast, JavacNode annotationNode) {
@@ -134,6 +140,7 @@ public class HandleGetter extends JavacAnnotationHandler<Getter> {
 		Getter annotationInstance = annotation.getInstance();
 		AccessLevel level = annotationInstance.value();
 		boolean lazy = annotationInstance.lazy();
+		boolean map = annotationInstance.map();
 		if (lazy) handleFlagUsage(annotationNode, ConfigurationKeys.GETTER_LAZY_FLAG_USAGE, "@Getter(lazy=true)");
 		
 		if (level == AccessLevel.NONE) {
@@ -147,23 +154,27 @@ public class HandleGetter extends JavacAnnotationHandler<Getter> {
 		
 		switch (node.getKind()) {
 		case FIELD:
-			createGetterForFields(level, fields, annotationNode, true, lazy, onMethod);
+			createGetterForFields(level, fields, annotationNode, true, lazy,map, onMethod);
 			break;
 		case TYPE:
 			if (lazy) annotationNode.addError("'lazy' is not supported for @Getter on a type.");
-			generateGetterForType(node, annotationNode, level, false, onMethod);
+			generateGetterForType(node, annotationNode, level,map, false, onMethod);
 			break;
 		}
 	}
 	
-	public void createGetterForFields(AccessLevel level, Collection<JavacNode> fieldNodes, JavacNode errorNode, boolean whineIfExists, boolean lazy, List<JCAnnotation> onMethod) {
+	public void createGetterForFields(AccessLevel level, Collection<JavacNode> fieldNodes, JavacNode errorNode, boolean whineIfExists, boolean lazy,boolean map, List<JCAnnotation> onMethod) {
 		for (JavacNode fieldNode : fieldNodes) {
-			createGetterForField(level, fieldNode, errorNode, whineIfExists, lazy, onMethod);
+			createGetterForField(level, fieldNode, errorNode, whineIfExists, lazy,map, onMethod);
 		}
 	}
-	
+
 	public void createGetterForField(AccessLevel level,
-			JavacNode fieldNode, JavacNode source, boolean whineIfExists, boolean lazy, List<JCAnnotation> onMethod) {
+									 JavacNode fieldNode, JavacNode source, boolean whineIfExists, boolean lazy, List<JCAnnotation> onMethod) {
+		createGetterForField(level, fieldNode, source, whineIfExists, lazy,false, onMethod);
+	}
+	public void createGetterForField(AccessLevel level,
+				JavacNode fieldNode, JavacNode source, boolean whineIfExists, boolean lazy,boolean map, List<JCAnnotation> onMethod) {
 		
 		if (fieldNode.getKind() != Kind.FIELD) {
 			source.addError(GETTER_NODE_NOT_SUPPORTED_ERR);
@@ -215,10 +226,13 @@ public class HandleGetter extends JavacAnnotationHandler<Getter> {
 		
 		long access = toJavacModifier(level) | (fieldDecl.mods.flags & Flags.STATIC);
 		
-		injectMethod(fieldNode.up(), createGetter(access, fieldNode, fieldNode.getTreeMaker(), source, lazy, onMethod));
+		injectMethod(fieldNode.up(), createGetter(access, fieldNode, fieldNode.getTreeMaker(), source, lazy,map, onMethod));
 	}
 	
 	public JCMethodDecl createGetter(long access, JavacNode field, JavacTreeMaker treeMaker, JavacNode source, boolean lazy, List<JCAnnotation> onMethod) {
+		return createGetter(access, field, treeMaker, source, lazy, false, onMethod);
+	}
+	public JCMethodDecl createGetter(long access, JavacNode field, JavacTreeMaker treeMaker, JavacNode source, boolean lazy,boolean map, List<JCAnnotation> onMethod) {
 		JCVariableDecl fieldNode = (JCVariableDecl) field.get();
 		
 		// Remember the type; lazy will change it
@@ -243,6 +257,8 @@ public class HandleGetter extends JavacAnnotationHandler<Getter> {
 			}
 			statements = createLazyGetterBody(treeMaker, field, source);
 			addSuppressWarningsUnchecked = LombokOptionsFactory.getDelombokOptions(field.getContext()).getFormatPreferences().generateSuppressWarnings();
+		} else if (map){
+			statements = createSimpleMapGetterBody(treeMaker,field,source,methodType);
 		} else {
 			statements = createSimpleGetterBody(treeMaker, field);
 		}
@@ -310,9 +326,16 @@ public class HandleGetter extends JavacAnnotationHandler<Getter> {
 		}
 		return delegates;
 	}
-	
+
 	public List<JCStatement> createSimpleGetterBody(JavacTreeMaker treeMaker, JavacNode field) {
 		return List.<JCStatement>of(treeMaker.Return(createFieldAccessor(treeMaker, field, FieldAccess.ALWAYS_FIELD)));
+	}
+	public List<JCStatement>  createSimpleMapGetterBody(JavacTreeMaker maker, JavacNode field,JavacNode source,JCExpression methodType) {
+		JCTree.JCExpression mapPutMethod = JavacHandlerUtil.chainDotsString(source, "get");
+		final JCTree.JCLiteral literal = maker.Literal(field.getName());
+		field.fieldOrMethodBaseType();
+		final JCMethodInvocation apply = maker.Apply(List.<JCExpression>nil(), mapPutMethod, List.<JCExpression>of(literal));
+		return List.<JCStatement>of(maker.Return(maker.TypeCast(methodType,apply)));
 	}
 	
 	private static final String AR = "java.util.concurrent.atomic.AtomicReference";
