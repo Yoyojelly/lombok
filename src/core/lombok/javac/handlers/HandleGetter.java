@@ -355,7 +355,6 @@ public class HandleGetter extends JavacAnnotationHandler<Getter> {
 
     public List<JCStatement> createSimpleMapGetterBody(JavacTreeMaker maker, JavacNode field, JavacNode source, JCExpression methodType) {
         String returnType = methodType.toString();
-        System.out.println("baseType:" + field.fieldOrMethodBaseType());
 
         if (builtInType.contains(returnType)) {
             JCTree.JCExpression mapPutMethod = JavacHandlerUtil.chainDotsString(source, "get");
@@ -368,7 +367,6 @@ public class HandleGetter extends JavacAnnotationHandler<Getter> {
             final JCTree.JCLiteral literal = maker.Literal(field.getName());
 
             final JCMethodInvocation apply = maker.Apply(List.<JCExpression>nil(), mapPutMethod, List.<JCExpression>of(literal));
-            System.out.println(apply);
             return List.<JCStatement>of(maker.Return(maker.TypeCast(methodType, apply)));
         }
 //		JCTree.JCExpression mapPutMethod = JavacHandlerUtil.chainDotsString(source, "get");
