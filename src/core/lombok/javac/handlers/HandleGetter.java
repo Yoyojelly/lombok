@@ -141,7 +141,7 @@ public class HandleGetter extends JavacAnnotationHandler<Getter> {
         Getter annotationInstance = annotation.getInstance();
         AccessLevel level = annotationInstance.value();
         boolean lazy = annotationInstance.lazy();
-        boolean map = annotationInstance.map();
+        boolean map = isBaseDynamicMap(node);
         if (lazy) handleFlagUsage(annotationNode, ConfigurationKeys.GETTER_LAZY_FLAG_USAGE, "@Getter(lazy=true)");
 
         if (level == AccessLevel.NONE) {
