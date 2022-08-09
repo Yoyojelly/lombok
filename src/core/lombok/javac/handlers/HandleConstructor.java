@@ -328,6 +328,12 @@ public class HandleConstructor {
 			JCFieldAccess thisX = maker.Select(maker.Ident(fieldNode.toName("this")), rawName);
 			JCExpression assign = maker.Assign(thisX, maker.Ident(fieldName));
 			assigns.append(maker.Exec(assign));
+			if (isBaseDynamicMap(typeNode)) {
+				JCTree.JCExpression mapPutMethod = JavacHandlerUtil.chainDotsString(source, "put");
+				final JCTree.JCLiteral literal = maker.Literal(field.getName().toString());
+				JCTree.JCExpression apply = maker.Apply(List.<JCExpression>nil(), mapPutMethod, List.<JCExpression>of(literal, maker.Ident(rawName)));
+				assigns.append(maker.Exec(apply));
+			}
 		}
 		
 		for (JavacNode fieldNode : fieldsToExplicit) {
