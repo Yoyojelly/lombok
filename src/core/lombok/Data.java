@@ -59,5 +59,4 @@ public @interface Data {
 	 */
 	String staticConstructor() default "";
 
-	boolean map() default false;
 }

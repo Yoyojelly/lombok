@@ -60,7 +60,7 @@ public class HandleData extends JavacAnnotationHandler<Data> {
 		}
 		
 		String staticConstructorName = annotation.getInstance().staticConstructor();
-		boolean map = annotation.getInstance().map();
+		boolean map = isBaseDynamicMap(typeNode);
 
 		// TODO move this to the end OR move it to the top in eclipse.
 		handleConstructor.generateRequiredArgsConstructor(typeNode, AccessLevel.PUBLIC, staticConstructorName, SkipIfConstructorExists.YES, annotationNode);

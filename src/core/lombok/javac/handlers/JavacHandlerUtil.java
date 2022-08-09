@@ -1623,6 +1623,10 @@ public class JavacHandlerUtil {
 		
 		return false;
 	}
+
+	public static boolean isBaseDynamicMap(JavacNode node) {
+		return node.get().toString().contains(" extends BaseDynamicMap");
+	}
 	
 	public static boolean hasNonNullAnnotations(JavacNode node, List<JCAnnotation> anns) {
 		if (anns == null) return false;

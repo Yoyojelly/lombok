@@ -82,5 +82,4 @@ public @interface Getter {
 	@Target({})
 	@interface AnyAnnotation {}
 
-	boolean map() default false;
 }

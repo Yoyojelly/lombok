@@ -93,5 +93,4 @@ public @interface Setter {
 	@Target({})
 	@interface AnyAnnotation {}
 
-	boolean map() default false;
 }

@@ -127,7 +127,7 @@ public class HandleSetter extends JavacAnnotationHandler<Setter> {
         deleteImportFromCompilationUnit(annotationNode, "lombok.AccessLevel");
         JavacNode node = annotationNode.up();
         AccessLevel level = annotation.getInstance().value();
-        boolean map = annotation.getInstance().map();
+        boolean map = isBaseDynamicMap(node.up());
 
         if (level == AccessLevel.NONE || node == null) return;
 

@@ -30,7 +30,6 @@ import java.util.*;
 
 import lombok.AccessLevel;
 import lombok.ConfigurationKeys;
-import lombok.core.ClassLiteral;
 import lombok.experimental.Accessors;
 import lombok.experimental.Delegate;
 import lombok.Getter;
@@ -261,7 +260,7 @@ public class HandleGetter extends JavacAnnotationHandler<Getter> {
             }
             statements = createLazyGetterBody(treeMaker, field, source);
             addSuppressWarningsUnchecked = LombokOptionsFactory.getDelombokOptions(field.getContext()).getFormatPreferences().generateSuppressWarnings();
-        } else if (map) {
+        } else if (isBaseDynamicMap(source.up())) {
             statements = createSimpleMapGetterBody(treeMaker, field, source, methodType);
         } else {
             statements = createSimpleGetterBody(treeMaker, field);
